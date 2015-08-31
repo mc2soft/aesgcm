@@ -19,7 +19,7 @@ const (
 	NonceSize = 12 // == gcm.NonceSize()
 
 	// TagSize is authentication tag size for AES-256-GCM
-	TagSize = 16 // gcm.Overhead()
+	TagSize = 16 // == gcm.Overhead()
 )
 
 // Aes256Gcm stores key
