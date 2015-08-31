@@ -1,4 +1,4 @@
 # aesgcm
-Go implementation of AES-GCM
+Go implementation of AES-256-GCM.
 
-Exported API is not stable yet. Come back later.
+[Documentation](http://godoc.org/github.com/mc2soft/aesgcm).

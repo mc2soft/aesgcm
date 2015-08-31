@@ -3,6 +3,7 @@ package aesgcm
 import (
 	"encoding/hex"
 	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -59,9 +60,9 @@ var testData = []TestData{
 	},
 }
 
-type AesGcmSuite struct{}
+type Aes256GcmSuite struct{}
 
-var _ = Suite(&AesGcmSuite{})
+var _ = Suite(&Aes256GcmSuite{})
 
 func stringToHex(s string) string {
 	return hex.EncodeToString([]byte(s))
@@ -76,7 +77,7 @@ func decodeHexString(c *C, s string) []byte {
 	return b
 }
 
-func (a *AesGcmSuite) TestNormal(c *C) {
+func (a *Aes256GcmSuite) TestNormal(c *C) {
 	for _, d := range testData {
 		c.Logf("%#v", d)
 
@@ -85,7 +86,7 @@ func (a *AesGcmSuite) TestNormal(c *C) {
 		nonce := decodeHexString(c, d.nonce)
 		aad := decodeHexString(c, d.aad)
 
-		g, err := NewAesGcm(key)
+		g, err := NewAes256Gcm(key)
 		c.Assert(err, IsNil)
 
 		ciphertext, err := g.Seal(plaintext, aad, nonce)
@@ -99,7 +100,7 @@ func (a *AesGcmSuite) TestNormal(c *C) {
 }
 
 // Same as TestNormal, but with Not at right place
-func (a *AesGcmSuite) testTamper(c *C, tamper func(d *TestData) bool) {
+func (a *Aes256GcmSuite) testTamper(c *C, tamper func(d *TestData) bool) {
 	for _, d := range testData {
 		ok := tamper(&d)
 		if !ok {
@@ -112,7 +113,7 @@ func (a *AesGcmSuite) testTamper(c *C, tamper func(d *TestData) bool) {
 		nonce := decodeHexString(c, d.nonce)
 		aad := decodeHexString(c, d.aad)
 
-		g, err := NewAesGcm(key)
+		g, err := NewAes256Gcm(key)
 		c.Assert(err, IsNil)
 
 		ciphertext, err := g.Seal(plaintext, aad, nonce)
@@ -139,14 +140,14 @@ func tamperString(s string) string {
 	}, s)
 }
 
-func (a *AesGcmSuite) TestTamperKey(c *C) {
+func (a *Aes256GcmSuite) TestTamperKey(c *C) {
 	a.testTamper(c, func(d *TestData) bool {
 		d.key = tamperString(d.key)
 		return true
 	})
 }
 
-func (a *AesGcmSuite) TestTamperPlaintext(c *C) {
+func (a *Aes256GcmSuite) TestTamperPlaintext(c *C) {
 	a.testTamper(c, func(d *TestData) bool {
 		if len(d.plaintext) == 0 {
 			return false
@@ -156,7 +157,7 @@ func (a *AesGcmSuite) TestTamperPlaintext(c *C) {
 	})
 }
 
-func (a *AesGcmSuite) TestTamperAad(c *C) {
+func (a *Aes256GcmSuite) TestTamperAad(c *C) {
 	a.testTamper(c, func(d *TestData) bool {
 		if len(d.aad) == 0 {
 			return false
@@ -166,14 +167,14 @@ func (a *AesGcmSuite) TestTamperAad(c *C) {
 	})
 }
 
-func (a *AesGcmSuite) TestTamperNonce(c *C) {
+func (a *Aes256GcmSuite) TestTamperNonce(c *C) {
 	a.testTamper(c, func(d *TestData) bool {
 		d.nonce = tamperString(d.nonce)
 		return true
 	})
 }
 
-func (a *AesGcmSuite) TestGenerateNonce(c *C) {
+func (a *Aes256GcmSuite) TestGenerateNonce(c *C) {
 	now := uint64(time.Now().UnixNano())
 	nonce1, err := GenerateNonce()
 	c.Assert(err, IsNil)
@@ -186,4 +187,20 @@ func (a *AesGcmSuite) TestGenerateNonce(c *C) {
 
 	c.Assert(fmt.Sprintf("%x", nonce1), Matches, fmt.Sprintf("%x", now)[:10]+".+")
 	c.Assert(fmt.Sprintf("%x", nonce2), Matches, fmt.Sprintf("%x", now)[:10]+".+")
+}
+
+func Example() {
+	nonce, _ := GenerateNonce()
+	key := []byte("Super Duper Secret Actually Not!") // len = KeySize
+	plaintext := []byte("This will be encrypted and authenticed")
+	aad := []byte("This will be authenticed only")
+
+	g, _ := NewAes256Gcm(key)
+	ciphertext, _ := g.Seal(plaintext, aad, nonce)
+
+	plaintext2, _ := g.Open(ciphertext, aad, nonce)
+	fmt.Println(reflect.DeepEqual(plaintext, plaintext2))
+
+	// Output:
+	// true
 }
