@@ -192,8 +192,8 @@ func (a *Aes256GcmSuite) TestGenerateNonce(c *C) {
 func Example() {
 	nonce, _ := GenerateNonce()
 	key := []byte("Super Duper Secret Actually Not!") // len = KeySize
-	plaintext := []byte("This will be encrypted and authenticed")
-	aad := []byte("This will be authenticed only")
+	plaintext := []byte("This will be encrypted and authenticated")
+	aad := []byte("This will be authenticated only")
 
 	g, _ := NewAes256Gcm(key)
 	ciphertext, _ := g.Seal(plaintext, aad, nonce)
